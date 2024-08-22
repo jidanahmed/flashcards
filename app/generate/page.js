@@ -14,6 +14,7 @@ import {
     Grid,
     Card,
     CardContent,
+    CardActionArea,
 } from '@mui/material'
 import { doc, collection, getDoc, getDocs, writeBatch } from "firebase/firestore";
 import { useState, useEffect } from 'react';
@@ -22,16 +23,31 @@ import { useUser } from '@clerk/nextjs';
 import db from "@/firebase";
 
 export default function Generate() {
+    const handleCardClick = (index) => {
+        setFlipped(prev => {
+            const newFlipped = [...prev];
+            newFlipped[index] = !newFlipped[index];
+            return newFlipped;
+        });
+    };
+
+
     const [text, setText] = useState('')
     const [flashcards, setFlashcards] = useState([])
 
-    const { user } = useUser();                             // from ai suggestion
+    const [isLoading, setIsLoading] = useState(false);                                  // loading stuff
+
+    const [flipped, setFlipped] = useState(Array(flashcards.length).fill(false));       // FLIP STUFF
+
+    const { user } = useUser();                                                         // from ai suggestion
 
     const handleSubmit = async () => {
         if (!text.trim()) {
             alert('Please enter some text to generate flashcards.')
             return
         }
+
+        setIsLoading(true);                                                              // Set loading to true when starting
 
         try {
             const response = await fetch('/api/generate', {
@@ -45,9 +61,14 @@ export default function Generate() {
 
             const data = await response.json()
             setFlashcards(data)
+
+            setFlipped(Array(data.length).fill(false));                                  // FLIP STUFF
+
         } catch (error) {
             console.error('Error generating flashcards:', error)
             alert('An error occurred while generating flashcards. Please try again.')
+        } finally {
+            setIsLoading(false);                                                         // Set loading to false when finished
         }
     }
 
@@ -57,8 +78,8 @@ export default function Generate() {
     const handleOpenDialog = () => setDialogOpen(true)
     const handleCloseDialog = () => setDialogOpen(false)
 
-    const saveFlashcards = async () => {
 
+    const saveFlashcards = async () => {
 
         if (!user) {                                                    // ai suggested to fix null id problem
             alert('Please log in to save flashcards.');
@@ -99,7 +120,7 @@ export default function Generate() {
     }
 
     return (
-        <Container maxWidth="md">
+        <Container maxWidth="md" sx={{ pb: 8 }}>
             <Box sx={{ my: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
                     Generate Flashcards
@@ -119,12 +140,20 @@ export default function Generate() {
                     color="primary"
                     onClick={handleSubmit}
                     fullWidth
+                    disabled={isLoading}
                 >
-                    Generate Flashcards
+                    {isLoading ? 'Generating...' : 'Generate Flashcards'}
                 </Button>
+                {isLoading && (
+                    <Box sx={{ mt: 2, textAlign: 'center' }}>
+                        <Typography variant="body1">
+                            AI is creating flashcards... Please wait.
+                        </Typography>
+                    </Box>
+                )}
             </Box>
 
-            {flashcards.length > 0 && (
+            {flashcards.length > 0 && (                                                                                 // replacing
                 <Box sx={{ mt: 4 }}>
                     <Typography variant="h5" component="h2" gutterBottom>
                         Generated Flashcards
@@ -132,13 +161,16 @@ export default function Generate() {
                     <Grid container spacing={2}>
                         {flashcards.map((flashcard, index) => (
                             <Grid item xs={12} sm={6} md={4} key={index}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6">Front:</Typography>
-                                        <Typography>{flashcard.front}</Typography>
-                                        <Typography variant="h6" sx={{ mt: 2 }}>Back:</Typography>
-                                        <Typography>{flashcard.back}</Typography>
-                                    </CardContent>
+                                <Card sx={{ backgroundColor: flipped[index] ? '#e0e0e0' : 'white' }}>                   {/* added stuff after Card to make flipped change color*/}
+                                    <CardActionArea onClick={() => handleCardClick(index)}>
+                                        <CardContent>
+                                            <Box sx={{ minHeight: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Typography variant="h6">
+                                                    {flipped[index] ? flashcard.back : flashcard.front}
+                                                </Typography>
+                                            </Box>
+                                        </CardContent>
+                                    </CardActionArea>
                                 </Card>
                             </Grid>
                         ))}

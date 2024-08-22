@@ -13,7 +13,7 @@ export default function SignInPage() {
             </Typography>
             <Button color="inherit">
               <Link href="/sign-up" passHref style={{ color: 'white' }}>
-                Sign Up
+                Sign In
               </Link>
             </Button>
           </Toolbar>

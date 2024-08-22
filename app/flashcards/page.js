@@ -5,10 +5,8 @@ import {
     Container,
     Typography,
     Box,
-    AppBar,
-    Toolbar,
     Grid,
-    Card, 
+    Card,
     CardActionArea,
     CardContent,
 } from '@mui/material'
@@ -58,13 +56,11 @@ export default function Flashcard() {
     return (
         <Container maxWidth="md">
 
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography variant="h6" style={{ flexGrow: 1 }}>
-                        Flashcards
-                    </Typography>
-                </Toolbar>
-            </AppBar>
+            <Box sx={{ my: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    Flashcard Sets
+                </Typography>
+            </Box>
 
 
             {flashcards.length > 0 ? (
